@@ -42,7 +42,6 @@ enum vm_opcode_t {
   VM_OPCODE_READ = 32,
   VM_OPCODE_WRITE = 33,
   // empty
-  VM_OPCODE_DYNAMIC_CALL = 35,
   VM_OPCODE_STATIC_ARRAY_NEW = 36,
   VM_OPCODE_STATIC_CONCAT = 37,
   VM_OPCODE_STATIC_CALL0 = 38,
@@ -84,3 +83,4 @@ typedef struct {
 #include "save.h"
 
 VM_API vm_state_t *vm_run(vm_state_t *state);
+vm_state_t *vm_run_save(vm_save_t save, size_t n, const vm_char_t *args[n]);
