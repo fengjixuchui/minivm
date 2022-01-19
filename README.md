@@ -1,4 +1,4 @@
-![The MiniVM Logo, looks like a brick according to some, some catfood according to others](MiniVM.svg)
+![The MiniVM Logo, looks like a brick according to some, some catfood according to others](res/MiniVM.svg)
 
 # MiniVM
 
@@ -65,14 +65,20 @@ Although each instruction is a bit more complex, there are way fewer instruction
 MiniVM's only dependencies are [9 functions](https://github.com/FastVM/minivm/blob/main/vm/libc.h) in `libc`:
 
 ```
-fmod, putchar, malloc, realloc, free, fopen, fclose, fwrite, fread
+printf, malloc, realloc, free, fopen, fclose, fwrite, fread, strlen
 ```
 
-Only `malloc` and `putchar` are relied on heavily, though:
-
-> `putchar` is the function all IO boils down to eventually.
+Only `malloc` and `printf` are relied on heavily, though:
+ 
+> `printf` is the function called by opcode do_putchar.
 > `malloc` is required for memory allocations as of recent.
->
+> `realloc` is required to grow memory. It could be replaced with malloc and free calls.
+> `free` is required to clean up memory.
+> `fopen` is used to open a file.
+> `fclose` is used to close a file.
+> `fwrite` is used by opcode do_dump and opcode do_write.
+> `fread` is used by opcode do_read.
+> `strlen` is used to get the length of entries in argc. 
 > — Shaw
 
 The entire codebase is highly configurable, allowing users of MiniVM to choose the optimal feature set that supports their application.
@@ -81,15 +87,11 @@ The entire codebase is highly configurable, allowing users of MiniVM to choose t
 
 Minivm has a select set of core types. 
 
-- none
-  - the lack of a value
-- boolean
-  - true or false
 - number
-  - configurable to be C's `int32_t num: 30;` or C's `double num;`
+  - able to represent at least what a 30 bit signed int can. 
 - array
   - unchanging in length
-  - mutable by default
+  - mutable data by default
 
 Because MiniVM is a register-based machine, it employs clever instructions to leverage common type layouts for better performance. For instance, to emulate closures arrays can be called as functions if the first item in that array is a function.
 
@@ -120,14 +122,14 @@ Taking benchmarks is hard. Benchmarks are fraught with peril and don't always te
 All benchmarks were run in hyperfine on a `2020 MacBook Air M1` with `8GB RAM` running `Big Sur 11.2.3`. The implementations we benchmarked are idiomatic and consistent between target benchmark languages. All benchmarks may be found in the [Paka repository](https://github.com/FastVM/paka/tree/main/bench) if you'd like to run them on your machine.
 
 ### Binary Trees: Allocations and GC
-![Binary Trees Graph](tree.png)
+![Binary Trees Graph](res/tree.png)
 
-As you can see, MiniVM (no JIT) beats luajit with the JIT on in this benchmark. MiniVM has a custom-built allocator and GC, which beats out luajit's slower modified version of `malloc`. MiniVM also is a hair faster that C for tree sizes above 13 (C is compiled ahead-of time, using `clang` with the `-Ofast` flag for best performance). For tree sizes less that 13, beats Node JS due to having a faster startup time. Overall, MiniVM's performance is about on par with JIT'd and compiled languages on this benchmark.
+As you can see, MiniVM (no JIT) beats luajit with the JIT on in this benchmark. MiniVM has a custom-built allocator and GC, which beats out luajit's slower modified version of `malloc`. MiniVM also is a hair faster than C for tree sizes above 13 (C is compiled ahead-of time, using `clang` with the `-Ofast` flag for best performance). It beats Node JS with tree sizes less than 13 due to having a faster startup time. Overall, MiniVM's performance is about on par with JIT'd and compiled languages on this benchmark.
 
 The binary tree benchmark measures the time it takes to create a balanced binary tree of a given depth and sum the values in each node to produce a total for the tree. This measures how well the language runtime handles a large number of repeated allocations and deallocations (no memory pooling is used or allowed).
 
 ### Recursive Fibonacci: Functions and Math
-![Fibonacci Runtime](fib.png)
+![Fibonacci Runtime](res/fib.png)
 
 As you can see, `minivm` (no JIT) is a hair slower than Node JS (JIT) but beats `luajit --joff` by a fair margin (no JIT).
 
